@@ -1,5 +1,9 @@
     #php-excel-reader-php8
 
+    #Original code from:
+    https://github.com/nuovo/spreadsheet-reader
+
+
     #work with php >= 8
     
     #Suitable for Arabic language
