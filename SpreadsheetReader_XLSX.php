@@ -20,9 +20,7 @@
 		 *	With large shared string caches there are huge performance gains, however a lot of memory could be used which
 		 *	can be a problem, especially on shared hosting.
 		 */
-
-		 //const SHARED_STRING_CACHE_LIMIT = 50000;
-		const SHARED_STRING_CACHE_LIMIT = null;
+		const SHARED_STRING_CACHE_LIMIT = 50000;
 
 		private $Options = array(
 			'TempDir' => '',
@@ -453,9 +451,8 @@
 						}
 						break;
 					case 't':
-						if ($this -> SharedStrings -> nodeType == XMLReader::END_ELEMENT)
+						if ($this -> SharedStrings -> nodeType != XMLReader::END_ELEMENT)
 						{
-						}else {
 							$CacheValue .= $this -> SharedStrings -> readString();
 						}
 						break;
@@ -578,9 +575,8 @@
 					switch ($this -> SharedStrings -> name)
 					{
 						case 't':
-							if ($this -> SharedStrings -> nodeType == XMLReader::END_ELEMENT)
+							if ($this -> SharedStrings -> nodeType != XMLReader::END_ELEMENT)
 							{
-							} else {
 								$Value .= $this -> SharedStrings -> readString();
 							}
 							break;
@@ -909,6 +905,11 @@
 						}
 					}
 
+					// Currency/Accounting
+					if ($Format['Currency'])
+					{
+						$Value = preg_replace('', $Format['Currency'], $Value);
+					}
 				}
 				
 			}
