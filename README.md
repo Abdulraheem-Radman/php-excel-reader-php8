@@ -14,9 +14,9 @@
     
 
 
-    require_once('php-excel-reader-php8/excel_reader2.php');
+    require_once('excel_reader2.php');
 
-    require_once('php-excel-reader-php8/SpreadsheetReader.php');
+    require_once('SpreadsheetReader.php');
 
 
 
