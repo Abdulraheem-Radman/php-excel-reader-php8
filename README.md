@@ -1,6 +1,13 @@
     #php-excel-reader-php8
 
+    #work with php >= 8
+    
+    #Suitable for Arabic language
+
+
     #example
+    
+    
 
 
     require_once('php-excel-reader-php8/excel_reader2.php');
