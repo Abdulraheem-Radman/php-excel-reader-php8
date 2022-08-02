@@ -1,6 +1,5 @@
-<?php
 
-    //example
+    #example
 
 
     require_once('php-excel-reader-php8/excel_reader2.php');
@@ -33,4 +32,4 @@
     }
 
     //......................
-?>
+
