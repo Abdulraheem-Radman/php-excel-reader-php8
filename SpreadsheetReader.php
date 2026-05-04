@@ -39,13 +39,13 @@
 		 */
 		public function __construct($Filepath, $OriginalFilename = false, $MimeType = false)
 		{
-			if (!is_readable($Filepath))
+			if(!is_readable($Filepath))
 			{
 				throw new Exception('SpreadsheetReader: File ('.$Filepath.') not readable');
 			}
 			// To avoid timezone warnings and exceptions for formatting dates retrieved from files
 			$DefaultTZ = @date_default_timezone_get();
-			if ($DefaultTZ)
+			if($DefaultTZ)
 			{
 				date_default_timezone_set($DefaultTZ);
 			}
@@ -53,22 +53,23 @@
 			// Checking the other parameters for correctness
 
 			// This should be a check for string but we're lenient
-			if (!empty($OriginalFilename) && !is_scalar($OriginalFilename))
+			if(!empty($OriginalFilename) && !is_scalar($OriginalFilename))
 			{
 				throw new Exception('SpreadsheetReader: Original file (2nd parameter) path is not a string or a scalar value.');
 			}
-			if (!empty($MimeType) && !is_scalar($MimeType))
+			if(!empty($MimeType) && !is_scalar($MimeType))
 			{
 				throw new Exception('SpreadsheetReader: Mime type (3nd parameter) path is not a string or a scalar value.');
 			}
 
 			// 1. Determine type
-			if (!$OriginalFilename)
+			if(!$OriginalFilename)
 			{
 				$OriginalFilename = $Filepath;
 			}
 
 			$Extension = strtolower(pathinfo($OriginalFilename, PATHINFO_EXTENSION));
+			
 			switch ($MimeType)
 			{
 				case 'text/csv':
@@ -87,7 +88,7 @@
 				case 'application/xlt':
 				case 'application/x-xls':
 					// Excel does weird stuff
-					if (in_array($Extension, array('csv', 'tsv', 'txt')))
+					if(in_array($Extension, array('csv', 'tsv', 'txt')))
 					{
 						$this -> Type = self::TYPE_CSV;
 					}
@@ -111,7 +112,7 @@
 					break;
 			}
 
-			if (!$this -> Type)
+			if(!$this -> Type)
 			{
 				switch ($Extension)
 				{
@@ -134,17 +135,17 @@
 						break;
 				}
 			}
-
+			 
 			// Pre-checking XLS files, in case they are renamed CSV or XLSX files
-			if ($this -> Type == self::TYPE_XLS)
+			if($this -> Type == self::TYPE_XLS)
 			{
 				self::Load(self::TYPE_XLS);
 				$this -> Handle = new SpreadsheetReader_XLS($Filepath);
-				if ($this -> Handle -> Error)
+				if($this -> Handle -> Error)
 				{
 					$this -> Handle -> __destruct();
 
-					if (is_resource($ZipHandle = zip_open($Filepath)))
+					if(is_resource($ZipHandle = zip_open($Filepath)))
 					{
 						$this -> Type = self::TYPE_XLSX;
 						zip_close($ZipHandle);
@@ -209,16 +210,17 @@
 		 */
 		private static function Load($Type)
 		{
-			if (!in_array($Type, array(self::TYPE_XLSX, self::TYPE_XLS, self::TYPE_CSV, self::TYPE_ODS)))
+			if(!in_array($Type, array(self::TYPE_XLSX, self::TYPE_XLS, self::TYPE_CSV, self::TYPE_ODS)))
 			{
 				throw new Exception('SpreadsheetReader: Invalid type ('.$Type.')');
 			}
 
 			// 2nd parameter is to prevent autoloading for the class.
 			// If autoload works, the require line is unnecessary, if it doesn't, it ends badly.
-			if (!class_exists('SpreadsheetReader_'.$Type, false))
+			if(!class_exists('SpreadsheetReader_'.$Type, false))
 			{
-				require(dirname(__FILE__).DIRECTORY_SEPARATOR.'SpreadsheetReader_'.$Type.'.php');
+				require_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'SpreadsheetReader_'.$Type.'.php');
+				
 			}
 		}
 
@@ -231,7 +233,7 @@
 		public function rewind(): void
 		{
 			$this -> Index = 0;
-			if ($this -> Handle)
+			if($this -> Handle)
 			{
 				$this -> Handle -> rewind();
 			}
@@ -245,7 +247,7 @@
 		 */
 		public function current(): mixed
 		{
-			if ($this -> Handle)
+			if($this -> Handle)
 			{
 				return $this -> Handle -> current();
 			}
@@ -258,7 +260,7 @@
 		 */ 
 		public function next(): void
 		{
-			if ($this -> Handle)
+			if($this -> Handle)
 			{
 				$this -> Index++;
 
@@ -275,7 +277,7 @@
 		 */ 
 		public function key(): mixed
 		{
-			if ($this -> Handle)
+			if($this -> Handle)
 			{
 				return $this -> Handle -> key();
 			}
@@ -290,7 +292,7 @@
 		 */ 
 		public function valid(): bool
 		{
-			if ($this -> Handle)
+			if($this -> Handle)
 			{
 				return $this -> Handle -> valid();
 			}
@@ -300,7 +302,7 @@
 		// !Countable interface method
 		public function count(): int
 		{
-			if ($this -> Handle)
+			if($this -> Handle)
 			{
 				return $this -> Handle -> count();
 			}
@@ -315,20 +317,20 @@
 		 */
 		public function seek($Position): void
 		{
-			if (!$this -> Handle)
+			if(!$this -> Handle)
 			{
 				throw new OutOfBoundsException('SpreadsheetReader: No file opened');
 			}
 
-			if (!isset($this ->Handle[$position])) {
-				throw new OutOfBoundsException("invalid seek position ($position)");
+			if(!isset($this ->Handle[$Position])){
+				throw new OutOfBoundsException("invalid seek position ($Position)");
 			}
 			
 			$CurrentIndex = $this -> Handle -> key();
 
-			if ($CurrentIndex != $Position)
+			if($CurrentIndex != $Position)
 			{
-				if ($Position < $CurrentIndex || is_null($CurrentIndex) || $Position == 0)
+				if($Position < $CurrentIndex || is_null($CurrentIndex) || $Position == 0)
 				{
 					$this -> rewind();
 				}
@@ -338,7 +340,7 @@
 					$this -> Handle -> next();
 				}
 
-				if (!$this -> Handle -> valid())
+				if(!$this -> Handle -> valid())
 				{
 					throw new OutOfBoundsException('SpreadsheetError: Position '.$Position.' not found');
 				}
