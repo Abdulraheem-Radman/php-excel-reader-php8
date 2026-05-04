@@ -20,7 +20,16 @@
 		 *	With large shared string caches there are huge performance gains, however a lot of memory could be used which
 		 *	can be a problem, especially on shared hosting.
 		 */
-		const SHARED_STRING_CACHE_LIMIT = 50000;
+		 
+		 /**
+* عدد السلاسل المشتركة التي يمكن تخزينها مؤقتًا بشكل معقول ، بمعنى أنها لا تتم قراءتها من الملف ولكنها مخزنة في الذاكرة.
+* إذا كان العدد الإجمالي للسلاسل المشتركة أعلى من هذا ، لا يتم استخدام التخزين المؤقت.
+* إذا كانت هذه القيمة خالية ، فسيتم تخزين السلاسل المشتركة مؤقتًا بصرف النظر عن المبلغ.
+* مع مخابئ سلسلة المشتركة الكبيرة هناك المكاسب الأداء الضخم ، ولكن يمكن استخدام الكثير من الذاكرة التي
+* يمكن أن يكون مشكلة ، وخاصة على الاستضافة المشتركة.
+*/		 
+		//const SHARED_STRING_CACHE_LIMIT = 50000;
+		const SHARED_STRING_CACHE_LIMIT = null;
 
 		private $Options = array(
 			'TempDir' => '',
@@ -60,7 +69,8 @@
 		/**
 		 * @var array Shared strings cache, if the number of shared strings is low enough
 		 */
-		private $SharedStringCache = array();
+
+		 private $SharedStringCache = array();
 
 		// Workbook data
 		/**
@@ -202,7 +212,7 @@
 		 */
 		public function __construct($Filepath, array $Options = null)
 		{
-			if (!is_readable($Filepath))
+			if(!is_readable($Filepath))
 			{
 				throw new Exception('SpreadsheetReader_XLSX: File not readable ('.$Filepath.')');
 			}
@@ -217,25 +227,25 @@
 			$Zip = new ZipArchive;
 			$Status = $Zip -> open($Filepath);
 
-			if ($Status !== true)
+			if($Status !== true)
 			{
 				throw new Exception('SpreadsheetReader_XLSX: File not readable ('.$Filepath.') (Error '.$Status.')');
 			}
 
 			// Getting the general workbook information
-			if ($Zip -> locateName('xl/workbook.xml') !== false)
+			if($Zip -> locateName('xl/workbook.xml') !== false)
 			{
 				$this -> WorkbookXML = new SimpleXMLElement($Zip -> getFromName('xl/workbook.xml'));
 			}
 
 			// Extracting the XMLs from the XLSX zip file
-			if ($Zip -> locateName('xl/sharedStrings.xml') !== false)
+			if($Zip -> locateName('xl/sharedStrings.xml') !== false)
 			{
 				$this -> SharedStringsPath = $this -> TempDir.'xl'.DIRECTORY_SEPARATOR.'sharedStrings.xml';
 				$Zip -> extractTo($this -> TempDir, 'xl/sharedStrings.xml');
 				$this -> TempFiles[] = $this -> TempDir.'xl'.DIRECTORY_SEPARATOR.'sharedStrings.xml';
 
-				if (is_readable($this -> SharedStringsPath))
+				if(is_readable($this -> SharedStringsPath))
 				{
 					$this -> SharedStrings = new XMLReader;
 					$this -> SharedStrings -> open($this -> SharedStringsPath);
@@ -247,7 +257,7 @@
 
 			foreach ($this -> Sheets as $Index => $Name)
 			{
-				if ($Zip -> locateName('xl/worksheets/sheet'.$Index.'.xml') !== false)
+				if($Zip -> locateName('xl/worksheets/sheet'.$Index.'.xml') !== false)
 				{
 					$Zip -> extractTo($this -> TempDir, 'xl/worksheets/sheet'.$Index.'.xml');
 					$this -> TempFiles[] = $this -> TempDir.'xl'.DIRECTORY_SEPARATOR.'worksheets'.DIRECTORY_SEPARATOR.'sheet'.$Index.'.xml';
@@ -257,15 +267,15 @@
 			$this -> ChangeSheet(0);
 
 			// If worksheet is present and is OK, parse the styles already
-			if ($Zip -> locateName('xl/styles.xml') !== false)
+			if($Zip -> locateName('xl/styles.xml') !== false)
 			{
 				$this -> StylesXML = new SimpleXMLElement($Zip -> getFromName('xl/styles.xml'));
-				if ($this -> StylesXML && $this -> StylesXML -> cellXfs && $this -> StylesXML -> cellXfs -> xf)
+				if($this -> StylesXML && $this -> StylesXML -> cellXfs && $this -> StylesXML -> cellXfs -> xf)
 				{
 					foreach ($this -> StylesXML -> cellXfs -> xf as $Index => $XF)
 					{
 						// Format #0 is a special case - it is the "General" format that is applied regardless of applyNumberFormat
-						if ($XF -> attributes() -> applyNumberFormat || (0 == (int)$XF -> attributes() -> numFmtId))
+						if($XF -> attributes() -> applyNumberFormat || (0 == (int)$XF -> attributes() -> numFmtId))
 						{
 							$FormatId = (int)$XF -> attributes() -> numFmtId;
 							// If format ID >= 164, it is a custom format and should be read from styleSheet\numFmts
@@ -279,7 +289,7 @@
 					}
 				}
 				
-				if ($this -> StylesXML -> numFmts && $this -> StylesXML -> numFmts -> numFmt)
+				if($this -> StylesXML -> numFmts && $this -> StylesXML -> numFmts -> numFmt)
 				{
 					foreach ($this -> StylesXML -> numFmts -> numFmt as $Index => $NumFmt)
 					{
@@ -293,7 +303,7 @@
 			$Zip -> close();
 
 			// Setting base date
-			if (!self::$BaseDate)
+			if(!self::$BaseDate)
 			{
 				self::$BaseDate = new DateTime;
 				self::$BaseDate -> setTimezone(new DateTimeZone('UTC'));
@@ -302,7 +312,7 @@
 			}
 
 			// Decimal and thousand separators
-			if (!self::$DecimalSeparator && !self::$ThousandSeparator && !self::$CurrencyCode)
+			if(!self::$DecimalSeparator && !self::$ThousandSeparator && !self::$CurrencyCode)
 			{
 				$Locale = localeconv();
 				self::$DecimalSeparator = $Locale['decimal_point'];
@@ -310,7 +320,7 @@
 				self::$CurrencyCode = $Locale['int_curr_symbol'];
 			}
 
-			if (function_exists('gmp_gcd'))
+			if(function_exists('gmp_gcd'))
 			{
 				self::$RuntimeInfo['GMPSupported'] = true;
 			}
@@ -327,32 +337,32 @@
 			}
 
 			// Better safe than sorry - shouldn't try deleting '.' or '/', or '..'.
-			if (strlen($this -> TempDir) > 2)
+			if(strlen($this -> TempDir) > 2)
 			{
 				@rmdir($this -> TempDir.'xl'.DIRECTORY_SEPARATOR.'worksheets');
 				@rmdir($this -> TempDir.'xl');
 				@rmdir($this -> TempDir);
 			}
 
-			if ($this -> Worksheet && $this -> Worksheet instanceof XMLReader)
+			if($this -> Worksheet && $this -> Worksheet instanceof XMLReader)
 			{
 				$this -> Worksheet -> close();
 				unset($this -> Worksheet);
 			}
 			unset($this -> WorksheetPath);
 
-			if ($this -> SharedStrings && $this -> SharedStrings instanceof XMLReader)
+			if($this -> SharedStrings && $this -> SharedStrings instanceof XMLReader)
 			{
 				$this -> SharedStrings -> close();
 				unset($this -> SharedStrings);
 			}
 			unset($this -> SharedStringsPath);
 
-			if (isset($this -> StylesXML))
+			if(isset($this -> StylesXML))
 			{
 				unset($this -> StylesXML);
 			}
-			if ($this -> WorkbookXML)
+			if($this -> WorkbookXML)
 			{
 				unset($this -> WorkbookXML);
 			}
@@ -365,7 +375,7 @@
 		 */
 		public function Sheets()
 		{
-			if ($this -> Sheets === false)
+			if($this -> Sheets === false)
 			{
 				$this -> Sheets = array();
 				foreach ($this -> WorkbookXML -> sheets -> sheet as $Index => $Sheet)
@@ -373,7 +383,7 @@
 					$Attributes = $Sheet -> attributes('r', true);
 					foreach ($Attributes as $Name => $Value)
 					{
-						if ($Name == 'id')
+						if($Name == 'id')
 						{
 							$SheetID = (int)str_replace('rId', '', (string)$Value);
 							break;
@@ -398,7 +408,7 @@
 		{
 			$RealSheetIndex = false;
 			$Sheets = $this -> Sheets();
-			if (isset($Sheets[$Index]))
+			if(isset($Sheets[$Index]))
 			{
 				$SheetIndexes = array_keys($this -> Sheets);
 				$RealSheetIndex = $SheetIndexes[$Index];
@@ -406,7 +416,7 @@
 
 			$TempWorksheetPath = $this -> TempDir.'xl/worksheets/sheet'.$RealSheetIndex.'.xml';
 
-			if ($RealSheetIndex !== false && is_readable($TempWorksheetPath))
+			if($RealSheetIndex !== false && is_readable($TempWorksheetPath))
 			{
 				$this -> WorksheetPath = $TempWorksheetPath;
 
@@ -424,14 +434,14 @@
 		{
 			while ($this -> SharedStrings -> read())
 			{
-				if ($this -> SharedStrings -> name == 'sst')
+				if($this -> SharedStrings -> name == 'sst')
 				{
 					$this -> SharedStringCount = $this -> SharedStrings -> getAttribute('count');
 					break;
 				}
 			}
 
-			if (!$this -> SharedStringCount || (self::SHARED_STRING_CACHE_LIMIT < $this -> SharedStringCount && self::SHARED_STRING_CACHE_LIMIT !== null))
+			if(!$this -> SharedStringCount || (self::SHARED_STRING_CACHE_LIMIT < $this -> SharedStringCount && self::SHARED_STRING_CACHE_LIMIT !== null))
 			{
 				return false;
 			}
@@ -443,7 +453,7 @@
 				switch ($this -> SharedStrings -> name)
 				{
 					case 'si':
-						if ($this -> SharedStrings -> nodeType == XMLReader::END_ELEMENT)
+						if($this -> SharedStrings -> nodeType == XMLReader::END_ELEMENT)
 						{
 							$this -> SharedStringCache[$CacheIndex] = $CacheValue;
 							$CacheIndex++;
@@ -451,10 +461,18 @@
 						}
 						break;
 					case 't':
-						if ($this -> SharedStrings -> nodeType != XMLReader::END_ELEMENT)
+						if($this -> SharedStrings -> nodeType == XMLReader::END_ELEMENT)
 						{
+							continue 2;
+						}
+						$CacheValue .= $this -> SharedStrings -> readString();
+						/*
+						if($this -> SharedStrings -> nodeType == XMLReader::END_ELEMENT)
+						{
+						}else {
 							$CacheValue .= $this -> SharedStrings -> readString();
 						}
+						*/
 						break;
 				}
 			}
@@ -472,9 +490,9 @@
 		 */
 		private function GetSharedString($Index)
 		{
-			if ((self::SHARED_STRING_CACHE_LIMIT === null || self::SHARED_STRING_CACHE_LIMIT > 0) && !empty($this -> SharedStringCache))
+			if((self::SHARED_STRING_CACHE_LIMIT === null || self::SHARED_STRING_CACHE_LIMIT > 0) && !empty($this -> SharedStringCache))
 			{
-				if (isset($this -> SharedStringCache[$Index]))
+				if(isset($this -> SharedStringCache[$Index]))
 				{
 					return $this -> SharedStringCache[$Index];
 				}
@@ -485,7 +503,7 @@
 			}
 
 			// If the desired index is before the current, rewind the XML
-			if ($this -> SharedStringIndex > $Index)
+			if($this -> SharedStringIndex > $Index)
 			{
 				$this -> SSOpen = false;
 				$this -> SharedStrings -> close();
@@ -496,11 +514,11 @@
 			}
 
 			// Finding the unique string count (if not already read)
-			if ($this -> SharedStringIndex == 0 && !$this -> SharedStringCount)
+			if($this -> SharedStringIndex == 0 && !$this -> SharedStringCount)
 			{
 				while ($this -> SharedStrings -> read())
 				{
-					if ($this -> SharedStrings -> name == 'sst')
+					if($this -> SharedStrings -> name == 'sst')
 					{
 						$this -> SharedStringCount = $this -> SharedStrings -> getAttribute('uniqueCount');
 						break;
@@ -509,14 +527,14 @@
 			}
 
 			// If index of the desired string is larger than possible, don't even bother.
-			if ($this -> SharedStringCount && ($Index >= $this -> SharedStringCount))
+			if($this -> SharedStringCount && ($Index >= $this -> SharedStringCount))
 			{
 				return '';
 			}
 
 			// If an index with the same value as the last already fetched is requested
 			// (any further traversing the tree would get us further away from the node)
-			if (($Index == $this -> SharedStringIndex) && ($this -> LastSharedStringValue !== null))
+			if(($Index == $this -> SharedStringIndex) && ($this -> LastSharedStringValue !== null))
 			{
 				return $this -> LastSharedStringValue;
 			}
@@ -525,22 +543,22 @@
 			while ($this -> SharedStringIndex <= $Index)
 			{
 				// SSForwarded is set further to avoid double reading in case nodes are skipped.
-				if ($this -> SSForwarded)
+				if($this -> SSForwarded)
 				{
 					$this -> SSForwarded = false;
 				}
 				else
 				{
 					$ReadStatus = $this -> SharedStrings -> read();
-					if (!$ReadStatus)
+					if(!$ReadStatus)
 					{
 						break;
 					}
 				}
 
-				if ($this -> SharedStrings -> name == 'si')
+				if($this -> SharedStrings -> name == 'si')
 				{
-					if ($this -> SharedStrings -> nodeType == XMLReader::END_ELEMENT)
+					if($this -> SharedStrings -> nodeType == XMLReader::END_ELEMENT)
 					{
 						$this -> SSOpen = false;
 						$this -> SharedStringIndex++;
@@ -549,7 +567,7 @@
 					{
 						$this -> SSOpen = true;
 	
-						if ($this -> SharedStringIndex < $Index)
+						if($this -> SharedStringIndex < $Index)
 						{
 							$this -> SSOpen = false;
 							$this -> SharedStrings -> next('si');
@@ -568,20 +586,27 @@
 			$Value = '';
 
 			// Extract the value from the shared string
-			if ($this -> SSOpen && ($this -> SharedStringIndex == $Index))
+			if($this -> SSOpen && ($this -> SharedStringIndex == $Index))
 			{
 				while ($this -> SharedStrings -> read())
 				{
 					switch ($this -> SharedStrings -> name)
 					{
 						case 't':
-							if ($this -> SharedStrings -> nodeType != XMLReader::END_ELEMENT)
+							if($this -> SharedStrings -> nodeType == XMLReader::END_ELEMENT)
 							{
+								continue 2;
+							}
+							/*
+							if($this -> SharedStrings -> nodeType == XMLReader::END_ELEMENT)
+							{
+							} else {
 								$Value .= $this -> SharedStrings -> readString();
 							}
+							*/
 							break;
 						case 'si':
-							if ($this -> SharedStrings -> nodeType == XMLReader::END_ELEMENT)
+							if($this -> SharedStrings -> nodeType == XMLReader::END_ELEMENT)
 							{
 								$this -> SSOpen = false;
 								$this -> SSForwarded = true;
@@ -592,7 +617,7 @@
 				}
 			}
 
-			if ($Value)
+			if($Value)
 			{
 				$this -> LastSharedStringValue = $Value;
 			}
@@ -609,12 +634,12 @@
 		 */
 		private function FormatValue($Value, $Index)
 		{
-			if (!is_numeric($Value))
+			if(!is_numeric($Value))
 			{
 				return $Value;
 			}
 
-			if (isset($this -> Styles[$Index]) && ($this -> Styles[$Index] !== false))
+			if(isset($this -> Styles[$Index]) && ($this -> Styles[$Index] !== false))
 			{
 				$Index = $this -> Styles[$Index];
 			}
@@ -624,19 +649,19 @@
 			}
 
 			// A special case for the "General" format
-			if ($Index == 0)
+			if($Index == 0)
 			{
 				return $this -> GeneralFormat($Value);
 			}
 
 			$Format = array();
 
-			if (isset($this -> ParsedFormatCache[$Index]))
+			if(isset($this -> ParsedFormatCache[$Index]))
 			{
 				$Format = $this -> ParsedFormatCache[$Index];
 			}
 
-			if (!$Format)
+			if(!$Format)
 			{
 				$Format = array(
 					'Code' => false,
@@ -646,7 +671,7 @@
 					'Currency' => false
 				);
 
-				if (isset(self::$BuiltinFormats[$Index]))
+				if(isset(self::$BuiltinFormats[$Index]))
 				{
 					$Format['Code'] = self::$BuiltinFormats[$Index];
 				}
@@ -656,7 +681,7 @@
 				}
 
 				// Format code found, now parsing the format
-				if ($Format['Code'])
+				if($Format['Code'])
 				{
 					$Sections = explode(';', $Format['Code']);
 					$Format['Code'] = $Sections[0];
@@ -664,14 +689,14 @@
 					switch (count($Sections))
 					{
 						case 2:
-							if ($Value < 0)
+							if($Value < 0)
 							{
 								$Format['Code'] = $Sections[1];
 							}
 							break;
 						case 3:
 						case 4:
-							if ($Value < 0)
+							if($Value < 0)
 							{
 								$Format['Code'] = $Sections[1];
 							}
@@ -687,7 +712,7 @@
 				$Format['Code'] = trim(preg_replace('{^\[[[:alpha:]]+\]}i', '', $Format['Code']));
 
 				// Percentages
-				if (substr($Format['Code'], -1) == '%')
+				if(substr($Format['Code'], -1) == '%')
 				{
 					$Format['Type'] = 'Percentage';
 				}
@@ -699,7 +724,7 @@
 					$Format['Code'] = strtolower($Format['Code']);
 
 					$Format['Code'] = strtr($Format['Code'], self::$DateReplacements['All']);
-					if (strpos($Format['Code'], 'A') === false)
+					if(strpos($Format['Code'], 'A') === false)
 					{
 						$Format['Code'] = strtr($Format['Code'], self::$DateReplacements['24H']);
 					}
@@ -721,7 +746,7 @@
 					// Removing string quotes
 					$Format['Code'] = str_replace(array('"', '*'), '', $Format['Code']);
 					// Removing thousands separator
-					if (strpos($Format['Code'], '0,0') !== false || strpos($Format['Code'], '#,#') !== false)
+					if(strpos($Format['Code'], '0,0') !== false || strpos($Format['Code'], '#,#') !== false)
 					{
 						$Format['Thousands'] = true;
 					}
@@ -730,7 +755,7 @@
 					// Scaling (Commas indicate the power)
 					$Scale = 1;
 					$Matches = array();
-					if (preg_match('{(0|#)(,+)}', $Format['Code'], $Matches))
+					if(preg_match('{(0|#)(,+)}', $Format['Code'], $Matches))
 					{
 						$Scale = pow(1000, strlen($Matches[2]));
 						// Removing the commas
@@ -739,7 +764,7 @@
 
 					$Format['Scale'] = $Scale;
 
-					if (preg_match('{#?.*\?\/\?}', $Format['Code']))
+					if(preg_match('{#?.*\?\/\?}', $Format['Code']))
 					{
 						$Format['Type'] = 'Fraction';
 					}
@@ -748,7 +773,7 @@
 						$Format['Code'] = str_replace('#', '', $Format['Code']);
 
 						$Matches = array();
-						if (preg_match('{(0+)(\.?)(0*)}', preg_replace('{\[[^\]]+\]}', '', $Format['Code']), $Matches))
+						if(preg_match('{(0+)(\.?)(0*)}', preg_replace('{\[[^\]]+\]}', '', $Format['Code']), $Matches))
 						{
 							$Integer = $Matches[1];
 							$DecimalPoint = $Matches[2];
@@ -762,17 +787,17 @@
 					}
 
 					$Matches = array();
-					if (preg_match('{\[\$(.*)\]}u', $Format['Code'], $Matches))
+					if(preg_match('{\[\$(.*)\]}u', $Format['Code'], $Matches))
 					{
 						$CurrFormat = $Matches[0];
 						$CurrCode = $Matches[1];
 						$CurrCode = explode('-', $CurrCode);
-						if ($CurrCode)
+						if($CurrCode)
 						{
 							$CurrCode = $CurrCode[0];
 						}
 
-						if (!$CurrCode)
+						if(!$CurrCode)
 						{
 							$CurrCode = self::$CurrencyCode;
 						}
@@ -786,16 +811,16 @@
 			}
 
 			// Applying format to value
-			if ($Format)
+			if($Format)
 			{
-    			if ($Format['Code'] == '@')
+    			if($Format['Code'] == '@')
     			{
         			return (string)$Value;
     			}
 				// Percentages
 				elseif ($Format['Type'] == 'Percentage')
 				{
-					if ($Format['Code'] === '0%')
+					if($Format['Code'] === '0%')
 					{
 						$Value = round(100 * $Value, 0).'%';
 					}
@@ -807,9 +832,18 @@
 				// Dates and times
 				elseif ($Format['Type'] == 'DateTime')
 				{
+					
+					$excel_date = (int)$Value; //here is that value 41621 or 41631
+					$unix_date = ($excel_date - 25569) * 86400;
+					$excel_date = 25569 + ($unix_date / 86400);
+					$unix_date = ($excel_date - 25569) * 86400;
+					$Value = gmdate("Y-m-d", $unix_date);
+
+/*
+
 					$Days = (int)$Value;
 					// Correcting for Feb 29, 1900
-					if ($Days > 60)
+					if($Days > 60)
 					{
 						$Days--;
 					}
@@ -817,7 +851,7 @@
 					// At this point time is a fraction of a day
 					$Time = ($Value - (int)$Value);
 					$Seconds = 0;
-					if ($Time)
+					if($Time)
 					{
 						// Here time is converted to seconds
 						// Some loss of precision will occur
@@ -827,7 +861,7 @@
 					$Value = clone self::$BaseDate;
 					$Value -> add(new DateInterval('P'.$Days.'D'.($Seconds ? 'T'.$Seconds.'S' : '')));
 
-					if (!$this -> Options['ReturnDateTimeObjects'])
+					if(!$this -> Options['ReturnDateTimeObjects'])
 					{
 						$Value = $Value -> format($Format['Code']);
 					}
@@ -835,6 +869,7 @@
 					{
 						// A DateTime object is returned
 					}
+					*/
 				}
 				elseif ($Format['Type'] == 'Euro')
 				{
@@ -843,7 +878,7 @@
 				else
 				{
 					// Fractional numbers
-					if ($Format['Type'] == 'Fraction' && ($Value != (int)$Value))
+					if($Format['Type'] == 'Fraction' && ($Value != (int)$Value))
 					{
 						$Integer = floor(abs($Value));
 						$Decimal = fmod(abs($Value), 1);
@@ -851,7 +886,7 @@
 						$Decimal *= pow(10, strlen($Decimal) - 2);
 						$DecimalDivisor = pow(10, strlen($Decimal));
 
-						if (self::$RuntimeInfo['GMPSupported'])
+						if(self::$RuntimeInfo['GMPSupported'])
 						{
 							$GCD = gmp_strval(gmp_gcd($Decimal, $DecimalDivisor));
 						}
@@ -860,10 +895,10 @@
 							$GCD = self::GCD($Decimal, $DecimalDivisor);
 						}
 
-						$AdjDecimal = $DecimalPart/$GCD;
+						$AdjDecimal = $Decimal/$GCD;
 						$AdjDecimalDivisor = $DecimalDivisor/$GCD;
 
-						if (
+						if(
 							strpos($Format['Code'], '0') !== false || 
 							strpos($Format['Code'], '#') !== false ||
 							substr($Format['Code'], 0, 3) == '? ?'
@@ -889,9 +924,9 @@
 						// Scaling
 						$Value = $Value / $Format['Scale'];
 
-						if (!empty($Format['MinWidth']) && $Format['Decimals'])
+						if(!empty($Format['MinWidth']) && $Format['Decimals'])
 						{
-							if ($Format['Thousands'])
+							if($Format['Thousands'])
 							{
 								$Value = number_format($Value, $Format['Precision'],
 									self::$DecimalSeparator, self::$ThousandSeparator);
@@ -905,11 +940,52 @@
 						}
 					}
 
+					/*
 					// Currency/Accounting
-					if ($Format['Currency'])
+					if($Format['Currency'])
 					{
+						//تم الغاء السطر التالي لانه لا يقبل الاستيراد بسبب عدم وجود قيمة ليستبدلها
 						$Value = preg_replace('', $Format['Currency'], $Value);
 					}
+					*/
+
+
+					// Currency/Accounting
+/*
+					if((empty($Value)) || (is_null($Value)) || ($Value=='') || ($Value=='0')){
+						$Value = "";
+					} else {
+						if((!empty($Format['Currency'])) && ($Format['Currency'] !="")){
+							try{
+								$Value = preg_replace('', $Format['Currency'], $Value);
+							} catch (Exception $ex){
+								//echo '<div class="alert alert-warning">هناك خطأ في قراءة حقل العملة! "'.$Value.'"</div>';
+								$Value = "";
+							}
+						//} else {
+							//$Value = "";
+							//echo 'errororrrrrrr';
+							//exit;
+						}
+					}
+*/
+					//echo 'next';
+					//exit;
+/*
+					if($Format['Currency'])
+					{
+						try{
+							if((empty($Value)) || (is_null($Value)) || ($Value=='') || ($Value=='0')){
+								$Value = 0;
+							} else {
+								$Value = preg_replace('', $Format['Currency'], $Value);
+							}
+						} catch (Exception $ex){
+							echo '<div class="alert alert-warning">هناك خطأ في قراءة حقل العملة! "'.$Value.'"</div>';
+							$Value = 0;
+						}
+					}
+					*/
 				}
 				
 			}
@@ -927,7 +1003,7 @@
 		public function GeneralFormat($Value)
 		{
 			// Numeric format
-			if (is_numeric($Value))
+			if(is_numeric($Value))
 			{
 				$Value = (float)$Value;
 			}
@@ -945,7 +1021,7 @@
 
 			// If the worksheet was already iterated, XML file is reopened.
 			// Otherwise it should be at the beginning anyway
-			if ($this -> Worksheet instanceof XMLReader)
+			if($this -> Worksheet instanceof XMLReader)
 			{
 				$this -> Worksheet -> close();
 			}
@@ -956,7 +1032,8 @@
 
 			try{
 				if(empty($this -> WorksheetPath)){
-					throw new Exception('SpreadsheetReader_XLSX: Error in File or sheet name');
+					echo "خطأ في صيغة تسمية الملف او صيغة تسمية صفحة العمل في ملف الاكسل";
+					exit;
 				} else {
 					$this -> Worksheet -> open($this -> WorksheetPath);
 
@@ -967,7 +1044,8 @@
 				
 				}
 			} catch (Exception $ex){
-				throw new Exception('SpreadsheetReader_XLSX: Error in File or sheet name');
+				echo "خطأ في صيغة تسمية الملف او صيغة تسمية صفحة العمل في ملف الاكسل";
+				exit;
 			}
 		}
 
@@ -979,7 +1057,7 @@
 		 */
 		public function current(): mixed
 		{
-			if ($this -> Index == 0 && $this -> CurrentRow === false)
+			if($this -> Index == 0 && $this -> CurrentRow === false)
 			{
 				$this -> next();
 				$this -> Index--;
@@ -997,16 +1075,16 @@
 
 			$this -> CurrentRow = array();
 
-			if (!$this -> RowOpen)
+			if(!$this -> RowOpen)
 			{
 				while ($this -> Valid = $this -> Worksheet -> read())
 				{
-					if ($this -> Worksheet -> name == 'row')
+					if($this -> Worksheet -> name == 'row')
 					{
 						// Getting the row spanning area (stored as e.g., 1:12)
 						// so that the last cells will be present, even if empty
 						$RowSpans = $this -> Worksheet -> getAttribute('spans');
-						if ($RowSpans)
+						if($RowSpans)
 						{
 							$RowSpans = explode(':', $RowSpans);
 							$CurrentRowColumnCount = $RowSpans[1];
@@ -1016,7 +1094,7 @@
 							$CurrentRowColumnCount = 0;
 						}
 
-						if ($CurrentRowColumnCount > 0)
+						if($CurrentRowColumnCount > 0)
 						{
 							$this -> CurrentRow = array_fill(0, $CurrentRowColumnCount, '');
 						}
@@ -1028,7 +1106,7 @@
 			}
 
 			// Reading the necessary row, if found
-			if ($this -> RowOpen)
+			if($this -> RowOpen)
 			{
 				// These two are needed to control for empty cells
 				$MaxIndex = 0;
@@ -1042,7 +1120,7 @@
 					{
 						// End of row
 						case 'row':
-							if ($this -> Worksheet -> nodeType == XMLReader::END_ELEMENT)
+							if($this -> Worksheet -> nodeType == XMLReader::END_ELEMENT)
 							{
 								$this -> RowOpen = false;
 								break 2;
@@ -1051,9 +1129,10 @@
 						// Cell
 						case 'c':
 							// If it is a closing tag, skip it
-							if ($this -> Worksheet -> nodeType == XMLReader::END_ELEMENT)
+							if($this -> Worksheet -> nodeType == XMLReader::END_ELEMENT)
 							{
-								break;
+								continue 2;
+								//break;
 								//continue;
 							}
 
@@ -1065,7 +1144,7 @@
 							$Index = self::IndexFromColumnLetter($Letter);
 
 							// Determine cell type
-							if ($this -> Worksheet -> getAttribute('t') == self::CELL_TYPE_SHARED_STR)
+							if($this -> Worksheet -> getAttribute('t') == self::CELL_TYPE_SHARED_STR)
 							{
 								$CellHasSharedString = true;
 							}
@@ -1077,7 +1156,7 @@
 							$this -> CurrentRow[$Index] = '';
 
 							$CellCount++;
-							if ($Index > $MaxIndex)
+							if($Index > $MaxIndex)
 							{
 								$MaxIndex = $Index;
 							}
@@ -1086,21 +1165,22 @@
 						// Cell value
 						case 'v':
 						case 'is':
-							if ($this -> Worksheet -> nodeType == XMLReader::END_ELEMENT)
+							if($this -> Worksheet -> nodeType == XMLReader::END_ELEMENT)
 							{
-								break;
+								continue 2;
+								//break;
 								//continue;
 							}
 
 							$Value = $this -> Worksheet -> readString();
 
-							if ($CellHasSharedString)
+							if($CellHasSharedString)
 							{
 								$Value = $this -> GetSharedString($Value);
 							}
 
 							// Format value if necessary
-							if ($Value !== '' && $StyleId && isset($this -> Styles[$StyleId]))
+							if($Value !== '' && $StyleId && isset($this -> Styles[$StyleId]))
 							{
 								$Value = $this -> FormatValue($Value, $StyleId);
 							}
@@ -1116,7 +1196,7 @@
 
 				// Adding empty cells, if necessary
 				// Only empty cells inbetween and on the left side are added
-				if ($MaxIndex + 1 > $CellCount)
+				if($MaxIndex + 1 > $CellCount)
 				{
 					$this -> CurrentRow = $this -> CurrentRow + array_fill(0, $MaxIndex + 1, '');
 					ksort($this -> CurrentRow);
@@ -1175,7 +1255,7 @@
 			for ($i = strlen($Letter) - 1, $j = 0; $i >= 0; $i--, $j++)
 			{
 				$Ord = ord($Letter[$i]) - 64;
-				if ($Ord > 26)
+				if($Ord > 26)
 				{
 					// Something is very, very wrong
 					return false;
@@ -1198,7 +1278,7 @@
 		{
 			$A = abs($A);
 			$B = abs($B);
-			if ($A + $B == 0)
+			if($A + $B == 0)
 			{
 				return 0;
 			}
